@@ -1,0 +1,14 @@
+.btn-no-border {
+  border: none;
+  color: black;
+  background: transparent;
+  box-shadow: none;
+}
+
+.btn-no-border:hover,
+.btn-no-border:focus,
+.btn-no-border:active {
+  background: transparent; /* убирает подсветку */
+  color: black; /* текст остаётся черным */
+  box-shadow: none; /* убирает тень при фокусе */
+}

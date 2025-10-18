@@ -1,0 +1,572 @@
+const path = require("path");
+const ApiError = require("../error/ApiError");
+const pool = require("../db");
+const uuid = require("uuid");
+
+class AdvertisementController {
+  async create(req, res, next) {
+    try {
+      const {
+        animal_name,
+        age,
+        breed,
+        description,
+        type_id,
+        type_advertisement,
+        location_name,
+        tutor_name,
+        tutor_number,
+        tutor_email,
+      } = req.body;
+      const user_id = req.user.id;
+
+      if (!animal_name || !type_advertisement || !type_id) {
+        return next(ApiError.badRequest("Не все обязательные поля заполнены"));
+      }
+
+      //  Создаём животное
+      const newAnimal = await pool.query(
+        `INSERT INTO animal (animal_name, age, breed, description, type_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [animal_name, age || null, breed || null, description || null, type_id]
+      );
+      const animal = newAnimal.rows[0];
+      console.log(animal_name);
+      // 2️ Обрабатываем загруженные файлы
+      if (req.files && req.files.photos) {
+        const files = Array.isArray(req.files.photos)
+          ? req.files.photos
+          : [req.files.photos]; // поддержка одного или нескольких файлов
+
+        const limitedFiles = files.slice(0, 10); // максимум 10
+
+        for (const file of limitedFiles) {
+          const fileName = uuid.v4() + path.extname(file.name);
+          const filePath = path.resolve("static", fileName);
+          await file.mv(filePath);
+
+          await pool.query(
+            `INSERT INTO animal_photos (animal_id, animal_photo_url)
+           VALUES ($1, $2)`,
+            [animal.animal_id, fileName]
+          );
+        }
+      }
+
+      const newAd = await pool.query(
+        `INSERT INTO advertisement (user_id, animal_id, type_advertisement, status, location_name, tutor_name,tutor_number,tutor_email)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [
+          user_id,
+          animal.animal_id,
+          type_advertisement,
+          0,
+          location_name || null,
+          tutor_name || null,
+          tutor_number || null,
+          tutor_email || null,
+        ]
+      );
+      const advertisement = newAd.rows[0];
+
+      // Добавляются этапы (если есть)
+      // frontend пришлёт поле stages в виде JSON-строки
+      // Пример: [{ stage_name: "Прививка", stage_description: "Первая вакцина", stage_date_start: "2025-05-10", stage_date_finish: null }]
+      if (req.body.stages) {
+        let stages = [];
+
+        try {
+          stages = JSON.parse(req.body.stages);
+          console.log(stages);
+        } catch (err) {
+          console.error("Ошибка парсинга stages:", err);
+          return next(ApiError.badRequest("Неверный формат данных stages"));
+        }
+
+        for (const stage of stages) {
+          const {
+            stage_name,
+            stage_description,
+            stage_date_start,
+            stage_date_finish,
+          } = stage;
+
+          await pool.query(
+            `INSERT INTO stages (advertisement_id, stage_name, stage_description, stage_date_start, stage_date_finish)
+           VALUES ($1, $2, $3, $4, $5)`,
+            [
+              advertisement.advertisement_id,
+              stage_name || null,
+              stage_description || null,
+              stage_date_start || null,
+              stage_date_finish || null,
+            ]
+          );
+        }
+      }
+
+      // Успешный ответ
+      res.status(201).json({
+        advertisement,
+        animal,
+        message: "Объявление успешно создано",
+      });
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при создании объявления"));
+    }
+  }
+
+  // Получить все объявления
+  async getAll(req, res, next) {
+    try {
+      const ads = await pool.query(
+        `
+      SELECT 
+        a.advertisement_id, 
+        a.type_advertisement, 
+        a.status, 
+        a.location_name,
+        a.created_at,
+        an.animal_id, 
+        an.animal_name, 
+        an.age, 
+        an.breed, 
+        an.description, 
+        an.type_id,
+        u.user_id, 
+        u.user_name, 
+        u.user_surname,
+        (
+          SELECT ap.animal_photo_url 
+          FROM animal_photos ap 
+          WHERE ap.animal_id = an.animal_id 
+          ORDER BY ap.animal_photo_id DESC 
+          LIMIT 1
+        ) AS preview_photo
+      FROM advertisement a
+      JOIN animal an ON a.animal_id = an.animal_id
+      JOIN "user" u ON a.user_id = u.user_id
+     
+      ORDER BY a.created_at DESC
+      `
+      );
+      res.json(ads.rows);
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при получении объявлений"));
+    }
+  }
+
+  // Получить все объявления отфильровано
+  async getAllFilter(req, res, next) {
+    try {
+      const {
+        typeId = null,
+        minAge = null,
+        maxAge = null,
+        search = "",
+      } = req.body || {};
+
+      let conditions = [];
+      let values = [];
+
+      if (typeId) {
+        values.push(typeId);
+        conditions.push(`an.type_id = $${values.length}`);
+      }
+
+      if (minAge) {
+        values.push(parseFloat(minAge));
+        conditions.push(`an.age >= $${values.length}`);
+      }
+
+      if (maxAge) {
+        values.push(parseFloat(maxAge));
+        conditions.push(`an.age <= $${values.length}`);
+      }
+
+      if (search) {
+        values.push(`%${search}%`);
+        conditions.push(`
+    (an.animal_name ILIKE $${values.length} 
+    OR an.breed ILIKE $${values.length} 
+    OR an.description ILIKE $${values.length})
+  `);
+      }
+
+      let whereClause = conditions.length
+        ? `WHERE ${conditions.join(" AND ")}`
+        : "";
+
+      const ads = await pool.query(
+        `
+      SELECT 
+        a.advertisement_id, 
+        a.type_advertisement, 
+        a.status, 
+        a.location_name,
+        a.created_at,
+        an.animal_id, 
+        an.animal_name, 
+        an.age, 
+        an.breed, 
+        an.description, 
+        an.type_id,
+        u.user_id, 
+        u.user_name, 
+        u.user_surname,
+        (
+          SELECT ap.animal_photo_url 
+          FROM animal_photos ap 
+          WHERE ap.animal_id = an.animal_id 
+          ORDER BY ap.animal_photo_id DESC 
+          LIMIT 1
+        ) AS preview_photo
+      FROM advertisement a
+      JOIN animal an ON a.animal_id = an.animal_id
+      JOIN "user" u ON a.user_id = u.user_id
+      ${whereClause}
+      ORDER BY a.created_at DESC
+      `,
+        values
+      );
+
+      res.json(ads.rows);
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при получении объявлений"));
+    }
+  }
+
+  async getmyAds(req, res, next) {
+    try {
+      const user_id = req.user.id;
+
+      const ads = await pool.query(
+        `
+      SELECT 
+        a.advertisement_id, 
+        a.type_advertisement, 
+        a.status, 
+        a.created_at,
+        an.animal_id, 
+        an.animal_name, 
+        an.age, 
+        an.breed, 
+        an.description, 
+        an.type_id,
+        u.user_id, 
+        u.user_name, 
+        u.user_surname,
+        (
+          SELECT ap.animal_photo_url 
+          FROM animal_photos ap 
+          WHERE ap.animal_id = an.animal_id 
+          ORDER BY ap.animal_photo_id DESC 
+          LIMIT 1
+        ) AS preview_photo
+      FROM advertisement a
+      JOIN animal an ON a.animal_id = an.animal_id
+      JOIN "user" u ON a.user_id = u.user_id
+      WHERE a.user_id = $1
+      ORDER BY a.created_at DESC
+      `,
+        [user_id]
+      );
+
+      res.json(ads.rows);
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при получении объявлений"));
+    }
+  }
+
+  // Получить одно объявление по ID
+  // Получить одно объявление по ID
+  async getOne(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      // Получаем объявление
+      const adQuery = await pool.query(
+        `SELECT 
+        a.advertisement_id,
+        a.type_advertisement,
+        a.status,
+        a.created_at,
+        a.tutor_email,
+        a.tutor_number,
+        a.tutor_name,
+        an.animal_id,
+        an.animal_name,
+        an.age,
+        an.breed,
+        an.description,
+        an.type_id,
+        u.user_id,
+        u.user_name,
+        u.user_surname,
+        u.user_phone,
+        u.user_ava_photo,
+        u.user_type,
+        l.location_name
+      FROM advertisement a
+      JOIN animal an ON a.animal_id = an.animal_id
+      JOIN "user" u ON a.user_id = u.user_id
+      LEFT JOIN location l ON u.location_id = l.location_id
+      WHERE a.advertisement_id = $1`,
+        [id]
+      );
+
+      if (adQuery.rows.length === 0) {
+        return next(ApiError.badRequest("Объявление не найдено"));
+      }
+
+      const ad = adQuery.rows[0];
+
+      // Получаем фото
+      const photosQuery = await pool.query(
+        `SELECT animal_photo_url 
+       FROM animal_photos 
+       WHERE animal_id = $1 
+       ORDER BY animal_photo_id DESC`,
+        [ad.animal_id]
+      );
+      const photos = photosQuery.rows.map((p) => p.animal_photo_url);
+
+      // Получаем этапы / события (только для приютов)
+      let stages = [];
+      if (ad.user_type === 2) {
+        const stagesQuery = await pool.query(
+          `SELECT stage_name, stage_description, stage_date_start, stage_date_finish
+         FROM stages
+         WHERE advertisement_id = $1
+         ORDER BY stage_date_start ASC`,
+          [ad.advertisement_id]
+        );
+        stages = stagesQuery.rows;
+      }
+
+      res.json({
+        ...ad,
+        photos,
+        stages, // добавляем этапы в ответ
+      });
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при получении объявления"));
+    }
+  }
+
+  async changeAds(req, res, next) {
+    try {
+      const { id } = req.params;
+      if (!id) return next(ApiError.badRequest("Не указан id объявления"));
+
+      const {
+        animal_name,
+        breed,
+        age,
+        description,
+        location_name,
+        existing_photos,
+        tutor_name,
+        tutor_number,
+        tutor_email,
+      } = req.body;
+      console.log(tutor_name);
+      const files = req.files?.photos
+        ? Array.isArray(req.files.photos)
+          ? req.files.photos
+          : [req.files.photos]
+        : [];
+
+      // Получаем animal_id
+      const adQuery = await pool.query(
+        `SELECT animal_id FROM advertisement WHERE advertisement_id = $1`,
+        [id]
+      );
+      if (!adQuery.rows.length)
+        return next(ApiError.badRequest("Объявление не найдено"));
+      const animal_id = adQuery.rows[0].animal_id;
+
+      // Обновляем животное
+      await pool.query(
+        `UPDATE animal SET animal_name=$1, breed=$2, age=$3, description=$4 WHERE animal_id=$5`,
+        [animal_name, breed, age || null, description || null, animal_id]
+      );
+
+      await pool.query(
+        `UPDATE advertisement SET tutor_name=$1, tutor_number=$2, tutor_email=$3 WHERE advertisement_id = $4`,
+        [tutor_name || null, tutor_number || null, tutor_email || null, id]
+      );
+
+      // Обновляем местоположение (если указано)
+      if (location_name) {
+        await pool.query(
+          `UPDATE "user"
+         SET location_id = (SELECT location_id FROM location WHERE location_name = $1)
+         WHERE user_id = (SELECT user_id FROM advertisement WHERE advertisement_id = $2)`,
+          [location_name, id]
+        );
+      }
+
+      const remainingPhotos = existing_photos
+        ? JSON.parse(existing_photos)
+        : [];
+
+      await pool.query(`DELETE FROM animal_photos WHERE animal_id=$1`, [
+        animal_id,
+      ]);
+
+      for (const photoName of remainingPhotos) {
+        await pool.query(
+          `INSERT INTO animal_photos (animal_id, animal_photo_url) VALUES ($1, $2)`,
+          [animal_id, photoName]
+        );
+      }
+
+      for (const file of files) {
+        const fileName = uuid.v4() + path.extname(file.name);
+        const filePath = path.resolve("static", fileName);
+        await file.mv(filePath);
+        await pool.query(
+          `INSERT INTO animal_photos (animal_id, animal_photo_url) VALUES ($1, $2)`,
+          [animal_id, fileName]
+        );
+      }
+      if (req.body.stages) {
+        let stages = [];
+        try {
+          stages = JSON.parse(req.body.stages); // stages приходит как JSON-строка из FormData
+        } catch (err) {
+          console.error("Ошибка парсинга stages:", err);
+          return next(ApiError.badRequest("Неверный формат данных stages"));
+        }
+
+        // Сначала удаляем старые этапы для этого объявления
+        await pool.query(`DELETE FROM stages WHERE advertisement_id=$1`, [id]);
+
+        // Вставляем новые/обновленные этапы
+        for (const stage of stages) {
+          const {
+            stage_name,
+            stage_description,
+            stage_date_start,
+            stage_date_finish,
+          } = stage;
+
+          await pool.query(
+            `INSERT INTO stages (advertisement_id, stage_name, stage_description, stage_date_start, stage_date_finish)
+       VALUES ($1, $2, $3, $4, $5)`,
+            [
+              id,
+              stage_name || null,
+              stage_description || null,
+              stage_date_start || null,
+              stage_date_finish || null,
+            ]
+          );
+        }
+      }
+      res.json({ message: "Объявление успешно обновлено" });
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при обновлении объявления"));
+    }
+  }
+
+  async deleteAds(req, res, next) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      // Проверяем существование объявления
+      const adResult = await pool.query(
+        "SELECT * FROM advertisement WHERE advertisement_id = $1",
+        [id]
+      );
+
+      if (adResult.rows.length === 0) {
+        return res.status(404).json({ message: "Объявление не найдено" });
+      }
+
+      const ad = adResult.rows[0];
+
+      // Проверяем права пользователя
+      if (ad.user_id !== userId) {
+        return res
+          .status(403)
+          .json({ message: "Нет прав на удаление этого объявления" });
+      }
+
+      // Удаляем связанные фотографии
+      await pool.query("DELETE FROM animal_photos WHERE animal_id = $1", [
+        ad.animal_id,
+      ]);
+
+      // Удаляем связанные этапы/события
+      await pool.query("DELETE FROM stages WHERE advertisement_id = $1", [id]);
+
+      // Удаляем объявление и животное
+      await pool.query(
+        "DELETE FROM advertisement WHERE advertisement_id = $1",
+        [id]
+      );
+      await pool.query("DELETE FROM animal WHERE animal_id = $1", [
+        ad.animal_id,
+      ]);
+
+      return res.json({ message: "Объявление успешно удалено" });
+    } catch (error) {
+      console.error(error);
+      next(ApiError.internal("Ошибка при удалении объявления"));
+    }
+  }
+
+  async getByUserId(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      const ads = await pool.query(
+        `    SELECT 
+        a.advertisement_id, 
+        a.type_advertisement, 
+        a.status, 
+        a.created_at,
+        an.animal_id, 
+        an.animal_name, 
+        an.age, 
+        an.breed, 
+        an.description, 
+        an.type_id,
+        u.user_id, 
+    
+        (
+          SELECT ap.animal_photo_url 
+          FROM animal_photos ap 
+          WHERE ap.animal_id = an.animal_id 
+          ORDER BY ap.animal_photo_id DESC 
+          LIMIT 1
+        ) AS preview_photo
+      FROM advertisement a
+      JOIN animal an ON a.animal_id = an.animal_id
+      JOIN "user" u ON a.user_id = u.user_id
+      WHERE a.user_id = $1
+      ORDER BY a.created_at DESC
+      `,
+        [id]
+      );
+
+      return res.json(ads.rows);
+    } catch (e) {
+      console.error("Ошибка при получении объявлений пользователя:", e);
+      return next(
+        ApiError.internal("Ошибка при получении объявлений пользователя")
+      );
+    }
+  }
+}
+
+module.exports = new AdvertisementController();

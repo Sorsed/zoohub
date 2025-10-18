@@ -1,0 +1,22 @@
+.ad-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ad-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.ad-image-wrapper {
+  width: 100%;
+  height: 180px; /* фиксированная высота */
+  overflow: hidden;
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+
+.ad-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* подстраивается под рамку без растягивания */
+}
