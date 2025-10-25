@@ -13,6 +13,8 @@ const OtherProfilePage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    window.scrollTo(0, 0); // прокрутка в верх
+
     const loadData = async () => {
       try {
         const userData = await getUserById(id);

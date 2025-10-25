@@ -99,6 +99,38 @@ const AdsPage = () => {
     navigate(`${OTHER_PROFILE_PAGE_ROUTE}/${ad.user_id}`);
   };
 
+  const formatAge = (age) => {
+    if (!age || age <= 0) return "не указан";
+
+    // Если меньше года — показываем месяцы
+    if (age < 1) {
+      const months = Math.round(age * 12);
+      const lastDigit = months % 10;
+      const lastTwo = months % 100;
+
+      let word = "месяцев";
+      if (lastTwo < 11 || lastTwo > 14) {
+        if (lastDigit === 1) word = "месяц";
+        else if (lastDigit >= 2 && lastDigit <= 4) word = "месяца";
+      }
+
+      return `${months} ${word}`;
+    }
+
+    // Если год или больше
+    const years = Math.floor(age);
+    const lastDigit = years % 10;
+    const lastTwo = years % 100;
+
+    let word = "лет";
+    if (lastTwo < 11 || lastTwo > 14) {
+      if (lastDigit === 1) word = "год";
+      else if (lastDigit >= 2 && lastDigit <= 4) word = "года";
+    }
+
+    return `${years} ${word}`;
+  };
+
   return (
     <div className="container py-5">
       <Button
@@ -263,7 +295,7 @@ const AdsPage = () => {
                 <strong>Порода:</strong> {ad.breed}
               </div>
               <div className="mb-2">
-                <strong>Возраст:</strong> {ad.age} лет
+                <strong>Возраст:</strong> {formatAge(ad.age)}
               </div>
             </Row>
           </div>

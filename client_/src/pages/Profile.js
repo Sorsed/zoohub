@@ -13,7 +13,7 @@ const Profile = observer(() => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // режим редактирования
+  const [isEditing, setIsEditing] = useState(false);
 
   // Общие поля
   const [userName, setUserName] = useState("");
@@ -29,7 +29,7 @@ const Profile = observer(() => {
   const [shelterWebsite, setShelterWebsite] = useState("");
   const [shelterAddress, setShelterAddress] = useState("");
 
-  const [userType, setUserType] = useState(1); // 1 - обычный, 2 - приют
+  const [userType, setUserType] = useState(1); // 1 - обычный, 2 - приют, 3 - админ
 
   // Загружаем профиль при монтировании
   useEffect(() => {
@@ -108,7 +108,7 @@ const Profile = observer(() => {
       toast.success("Профиль обновлён!");
       const updatedData = await getMyprofile();
       user.setUser(updatedData);
-      setIsEditing(false); // выходим из режима редактирования
+      setIsEditing(false);
     } catch (err) {
       toast.error(err.response?.data?.message || "Ошибка обновления профиля");
     } finally {
@@ -116,7 +116,7 @@ const Profile = observer(() => {
     }
   };
 
-  // Отмена редактирования — возвращаем все значения к серверным
+  // Отмена редактирования
   const handleCancel = async () => {
     try {
       const data = await getMyprofile();
@@ -175,41 +175,40 @@ const Profile = observer(() => {
         </div>
 
         <Form onSubmit={handleSubmit}>
-          {userType === 1 ||
-            (userType === 3 && (
-              <>
-                <Form.Group className="mb-3">
-                  <Form.Label>Имя</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    disabled={!isEditing}
-                    required
-                  />
-                </Form.Group>
+          {(userType === 1 || userType === 3) && (
+            <>
+              <Form.Group className="mb-3">
+                <Form.Label>Имя</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  disabled={!isEditing}
+                  required
+                />
+              </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Фамилия</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={userSurname}
-                    onChange={(e) => setUserSurname(e.target.value)}
-                    disabled={!isEditing}
-                    required
-                  />
-                </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Фамилия</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={userSurname}
+                  onChange={(e) => setUserSurname(e.target.value)}
+                  disabled={!isEditing}
+                  required
+                />
+              </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Город</Form.Label>
-                  <Form.Control
-                    value="Самара"
-                    onChange={(e) => setLocation(e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </Form.Group>
-              </>
-            ))}
+              <Form.Group className="mb-3">
+                <Form.Label>Город</Form.Label>
+                <Form.Control
+                  value={location || "Самара"}
+                  onChange={(e) => setLocation(e.target.value)}
+                  disabled={!isEditing}
+                />
+              </Form.Group>
+            </>
+          )}
 
           {userType === 2 && (
             <>
@@ -245,6 +244,7 @@ const Profile = observer(() => {
                   style={{ resize: "none", height: "auto", overflow: "hidden" }}
                 />
               </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Сайт приюта</Form.Label>
                 <Form.Control
