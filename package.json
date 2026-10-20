@@ -7,7 +7,7 @@
     "client": "npm start --prefix client_",
     "server": "npm run dev --prefix server",
     "build": "npm run build --prefix client_",
-    "render-build": "npm install --prefix server && npm install --prefix client_ && npm run build --prefix client_",
+    "render-build": "npm install --prefix server && npm install --prefix client_ --legacy-peer-deps && npm run build --prefix client_",
     "seed": "node server/seed.js"
   }
 }
