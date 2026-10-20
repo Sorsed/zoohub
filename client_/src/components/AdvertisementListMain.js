@@ -1,5 +1,5 @@
 import React from "react";
-import { Spinner, Alert, Row, Col } from "react-bootstrap";
+import { Spinner, Row, Col } from "react-bootstrap";
 import AdvertisementItemMain from "./AdvertisementItemMain";
 
 const AdvertisementListMain = ({ ads = [], loading }) => {
@@ -16,7 +16,7 @@ const AdvertisementListMain = ({ ads = [], loading }) => {
   }
 
   return (
-    <Row xs={1} md={4} className="g-4 mt-2">
+    <Row xs={1} sm={2} lg={3} className="g-4 mt-1">
       {ads.map((ad) => (
         <Col key={ad.advertisement_id}>
           <AdvertisementItemMain ad={ad} />

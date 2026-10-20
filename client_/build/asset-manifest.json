@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/static/css/main.5902f940.css",
+    "main.js": "/static/js/main.ec9ad0ac.js",
+    "static/media/hero-pets.jpg": "/static/media/hero-pets.072921a2ecb0ad0e7709.jpg",
+    "static/media/defaultAnimal.png": "/static/media/defaultAnimal.1b2bc4c3fd037f10ea3f.png",
+    "static/media/defaultAvatar.png": "/static/media/defaultAvatar.1b2bc4c3fd037f10ea3f.png",
+    "static/media/story-1.jpg": "/static/media/story-1.a5593b31d68a2cd61d6f.jpg",
+    "static/media/story-2.jpg": "/static/media/story-2.fcb2c28b854e25d7699c.jpg",
+    "index.html": "/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.5902f940.css",
+    "static/js/main.ec9ad0ac.js"
+  ]
+}

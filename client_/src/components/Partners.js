@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Tabs, Tab } from "react-bootstrap";
+import { Card, Row, Col, Tabs, Tab, Image, Badge, Button } from "react-bootstrap";
 import { MapPin, Phone, Mail } from "lucide-react";
 import { YMaps, Map, Placemark, Clusterer } from "react-yandex-maps";
 import { fetchShelters } from "../http/shelterAPI";
+import { fetchVolunteers } from "../http/userAPI";
 import { OTHER_PROFILE_PAGE_ROUTE } from "../utils/consts";
+import defaultAvatar from "../assets/defaultAvatar.png";
 
 const Partners = () => {
   const [shelters, setShelters] = useState([]);
+  const [volunteers, setVolunteers] = useState([]);
 
   useEffect(() => {
     fetchShelters().then((data) => {
       if (data) setShelters(data);
+    });
+    fetchVolunteers().then((data) => {
+      if (data) setVolunteers(data);
     });
   }, []);
 
@@ -262,6 +268,110 @@ const Partners = () => {
                 </Map>
               </YMaps>
             </Card.Body>
+          </Card>
+        </Tab>
+
+        {/* --- ВОЛОНТЁРЫ --- */}
+        <Tab eventKey="volunteers" title="Волонтёры">
+          <div className="mb-4 text-center">
+            <h3 className="fw-bold">Наши волонтёры</h3>
+            <p className="text-muted">
+              Неравнодушные люди, которые спасают животных, организуют передержки и помогают искать дом.
+            </p>
+          </div>
+
+          <Row>
+            {volunteers.length === 0 ? (
+              <Col xs={12} className="text-center py-4 text-muted">
+                Список волонтёров загружается...
+              </Col>
+            ) : (
+              volunteers.map((vol) => (
+                <Col md={4} sm={6} className="mb-4" key={vol.user_id}>
+                  <Card className="h-100 shadow-sm border-0 rounded-4">
+                    <Card.Body className="d-flex flex-column text-center p-4">
+                      <div className="mb-3 d-flex justify-content-center">
+                        <Image
+                          src={
+                            vol.user_ava_photo
+                              ? `${process.env.REACT_APP_API_URL}/${vol.user_ava_photo}`
+                              : defaultAvatar
+                          }
+                          roundedCircle
+                          width={90}
+                          height={90}
+                          className="border border-2 border-success object-fit-cover shadow-sm"
+                          alt={`${vol.user_name} ${vol.user_surname || ""}`}
+                        />
+                      </div>
+                      <h5 className="fw-bold mb-1">
+                        <a
+                          href={`${OTHER_PROFILE_PAGE_ROUTE}/${vol.user_id}`}
+                          className="text-decoration-none text-dark"
+                        >
+                          {vol.user_name} {vol.user_surname}
+                        </a>
+                      </h5>
+                      <div className="mb-2">
+                        <Badge bg="success" className="px-2 py-1">
+                          🐾 Волонтёр
+                        </Badge>
+                      </div>
+
+                      <div className="small text-muted mb-3 flex-grow-1">
+                        {vol.bio ||
+                          "Помощь бездомным животным, кураторство, передержка и транспортировка."}
+                      </div>
+
+                      <div className="border-top pt-3 text-start small text-muted">
+                        <div className="mb-1">
+                          <MapPin size={14} className="me-1 text-danger" />{" "}
+                          {vol.location_name || "Самара"}
+                        </div>
+                        {vol.user_phone && (
+                          <div className="mb-1">
+                            <Phone size={14} className="me-1 text-success" />{" "}
+                            <a
+                              href={`tel:${vol.user_phone}`}
+                              className="text-decoration-none text-muted"
+                            >
+                              {vol.user_phone}
+                            </a>
+                          </div>
+                        )}
+                        {vol.user_email && (
+                          <div>
+                            <Mail size={14} className="me-1 text-primary" />{" "}
+                            <a
+                              href={`mailto:${vol.user_email}`}
+                              className="text-decoration-none text-muted"
+                            >
+                              {vol.user_email}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))
+            )}
+          </Row>
+
+          <Card className="mt-4 p-4 text-center border-0 rounded-4 shadow-sm bg-warning bg-opacity-10 border border-warning">
+            <h4 className="fw-bold mb-2">Хотите помогать животным вместе с нами?</h4>
+            <p className="text-muted mb-3">
+              Зарегистрируйтесь на ZooHub, включите статус «Я волонтёр» в настройках своего профиля и присоединяйтесь к команде спасения!
+            </p>
+            <div>
+              <Button
+                variant="warning"
+                className="fw-bold px-4"
+                onClick={() => (window.location.href = "/profile")}
+              >
+                Стать волонтёром
+              </Button>
+            </div>
           </Card>
         </Tab>
       </Tabs>

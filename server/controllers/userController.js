@@ -93,7 +93,8 @@ class UserController {
       ]);
 
       req.session.userId = user.user_id;
-      req.session.username = user.user_name;
+      req.session.username = `${user.user_name} ${user.user_surname || ""}`.trim();
+      req.session.user_type = Number(user.user_type);
 
       return res.json({ msg: "Регистрация успешна", user });
     } catch (e) {
@@ -127,8 +128,10 @@ class UserController {
 
       // Сохраняем в сессию
       req.session.userId = user.user_id;
-      req.session.username = `${user.user_name} ${user.user_surname}`;
+      req.session.username = `${user.user_name} ${user.user_surname || ""}`.trim();
+      req.session.user_type = Number(user.user_type);
 
+      delete user.user_password;
       return res.json({ user });
     } catch (e) {
       console.error(e);
@@ -138,14 +141,59 @@ class UserController {
 
   // Проверка авторизации
   async check(req, res, next) {
-    if (req.session.userId) {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ loggedIn: false });
+      }
+
+      const result = await pool.query(
+        `SELECT u.user_id, u.user_name, u.user_surname, u.user_email, u.user_phone,
+                u.user_ava_photo, u.user_type, u.user_shelter_description,
+                u.user_shelter_site, u.user_shelter_address, u.location_id,
+                COALESCE(l.location_name, 'Самара') AS location_name
+         FROM "user" u
+         LEFT JOIN location l ON u.location_id = l.location_id
+         WHERE u.user_id = $1`,
+        [req.session.userId]
+      );
+
+      if (result.rows.length === 0) {
+        req.session.destroy();
+        return res.status(401).json({ loggedIn: false });
+      }
+
+      const user = result.rows[0];
+      req.session.user_type = Number(user.user_type);
       return res.json({
         loggedIn: true,
-        userId: req.session.userId,
-        username: req.session.username,
+        userId: user.user_id,
+        user_id: user.user_id,
+        user_type: Number(user.user_type),
+        username: `${user.user_name} ${user.user_surname || ""}`.trim(),
+        ...user,
       });
-    } else {
-      return res.status(401).json({ loggedIn: false });
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при проверке авторизации"));
+    }
+  }
+
+  // Получить всех волонтёров (user_type = 3)
+  async getVolunteers(req, res, next) {
+    try {
+      const volunteers = await pool.query(
+        `SELECT u.user_id, u.user_name, u.user_surname, u.user_phone, u.user_email,
+                u.user_ava_photo, u.user_type, u.user_shelter_description as bio,
+                COALESCE(l.location_name, 'Самара') as location_name
+         FROM "user" u
+         LEFT JOIN location l ON u.location_id = l.location_id
+         WHERE u.user_type = 3
+         ORDER BY u.user_id DESC`
+      );
+      return res.json(volunteers.rows);
+    } catch (e) {
+      console.error(e);
+      next(ApiError.internal("Ошибка при получении списка волонтёров"));
     }
   }
 

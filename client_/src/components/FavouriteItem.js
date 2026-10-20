@@ -1,13 +1,24 @@
 import React, { useState } from "react";
-import { Card, Badge } from "react-bootstrap";
-import { MapPin } from "lucide-react";
+import { Card, Badge, Button } from "react-bootstrap";
+import { MapPin, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import defaultAnimal from "../assets/defaultAnimal.png";
 import { ADS_ROUTE } from "../utils/consts";
+import { removeFromFavourites } from "../http/fauvoriteAPI";
 
-const FavouriteItem = ({ ad }) => {
+const FavouriteItem = ({ ad, onChange }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+
+  const handleRemove = async (e) => {
+    e.stopPropagation();
+    try {
+      await removeFromFavourites(ad.advertisement_id);
+      if (onChange) onChange();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const imageUrl = ad.preview_photo
     ? `${process.env.REACT_APP_API_URL}/${ad.preview_photo}`
@@ -138,10 +149,23 @@ const FavouriteItem = ({ ad }) => {
           </div>
 
           {ad.isUrgent && (
-            <Badge bg="danger" className="align-self-start">
+            <Badge bg="danger" className="align-self-start mb-2">
               Срочно ищет дом!
             </Badge>
           )}
+
+          <div className="d-flex justify-content-end mt-2 pt-2 border-top">
+            <Button
+              variant="outline-danger"
+              size="sm"
+              className="d-flex align-items-center gap-1 rounded-3"
+              onClick={handleRemove}
+              title="Удалить из избранного"
+            >
+              <Trash2 size={14} />
+              <span>Удалить</span>
+            </Button>
+          </div>
         </Card.Body>
       </Card>
     </div>

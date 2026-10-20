@@ -17,6 +17,10 @@ class AdvertisementController {
         tutor_name,
         tutor_number,
         tutor_email,
+        is_sterilized,
+        is_vaccinated,
+        good_with_kids,
+        good_with_animals,
       } = req.body;
       const user_id = req.user.id;
 
@@ -24,11 +28,26 @@ class AdvertisementController {
         return next(ApiError.badRequest("Не все обязательные поля заполнены"));
       }
 
+      const isSterilized = is_sterilized === true || is_sterilized === "true" || is_sterilized === 1 || is_sterilized === "1";
+      const isVaccinated = is_vaccinated === true || is_vaccinated === "true" || is_vaccinated === 1 || is_vaccinated === "1";
+      const goodWithKids = good_with_kids === true || good_with_kids === "true" || good_with_kids === 1 || good_with_kids === "1";
+      const goodWithAnimals = good_with_animals === true || good_with_animals === "true" || good_with_animals === 1 || good_with_animals === "1";
+
       //  Создаём животное
       const newAnimal = await pool.query(
-        `INSERT INTO animal (animal_name, age, breed, description, type_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [animal_name, age || null, breed || null, description || null, type_id]
+        `INSERT INTO animal (animal_name, age, breed, description, type_id, is_sterilized, is_vaccinated, good_with_kids, good_with_animals)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [
+          animal_name,
+          age || null,
+          breed || null,
+          description || null,
+          type_id,
+          isSterilized,
+          isVaccinated,
+          goodWithKids,
+          goodWithAnimals,
+        ]
       );
       const animal = newAnimal.rows[0];
       console.log(animal_name);
@@ -134,9 +153,14 @@ class AdvertisementController {
         an.breed, 
         an.description, 
         an.type_id,
+        an.is_sterilized,
+        an.is_vaccinated,
+        an.good_with_kids,
+        an.good_with_animals,
         u.user_id, 
         u.user_name, 
         u.user_surname,
+        u.user_type,
         (
           SELECT ap.animal_photo_url 
           FROM animal_photos ap 
@@ -158,83 +182,160 @@ class AdvertisementController {
     }
   }
 
-  // Получить все объявления отфильровано
+  // Получить все объявления отфильтровано
   async getAllFilter(req, res, next) {
     try {
-      const {
-        typeId = null,
-        minAge = null,
-        maxAge = null,
-        search = "",
-      } = req.body || {};
+      const params = { ...(req.query || {}), ...(req.body || {}) };
+      const rawTypeId = params.type_id !== undefined ? params.type_id : (params.typeId !== undefined ? params.typeId : params.type);
+      const rawTypeAd = params.type_advertisement !== undefined ? params.type_advertisement : (params.typeAdvertisement !== undefined ? params.typeAdvertisement : params.category);
+      const minAge = params.minAge;
+      const maxAge = params.maxAge;
+      const search = (params.search || params.q || "").trim();
+      const city = (params.city || "").trim();
+      const sortBy = params.sortBy || "newest";
 
       let conditions = [];
       let values = [];
+
+      // Фильтр по виду животного
+      let typeId = null;
+      if (rawTypeId !== null && rawTypeId !== undefined && rawTypeId !== "" && rawTypeId !== "Все" && rawTypeId !== "null") {
+        if (!isNaN(Number(rawTypeId))) {
+          typeId = Number(rawTypeId);
+        } else if (typeof rawTypeId === "string") {
+          const lower = rawTypeId.toLowerCase();
+          if (lower.includes("собак") || lower === "dogs" || lower === "dog") typeId = 1;
+          else if (lower.includes("кош") || lower.includes("кот") || lower === "cats" || lower === "cat") typeId = 2;
+          else if (lower.includes("птиц") || lower.includes("попуг")) typeId = 3;
+          else if (lower.includes("грыз") || lower.includes("хомяк") || lower.includes("кролик")) typeId = 4;
+        }
+      }
 
       if (typeId) {
         values.push(typeId);
         conditions.push(`an.type_id = $${values.length}`);
       }
 
-      if (minAge) {
+      // Фильтр по категории объявления
+      let typeAdvertisement = null;
+      if (rawTypeAd !== null && rawTypeAd !== undefined && rawTypeAd !== "" && rawTypeAd !== "Все" && rawTypeAd !== "null") {
+        if (!isNaN(Number(rawTypeAd))) {
+          typeAdvertisement = Number(rawTypeAd);
+        } else if (typeof rawTypeAd === "string") {
+          if (rawTypeAd.includes("дом") || rawTypeAd.includes("руки")) typeAdvertisement = 1;
+          else if (rawTypeAd.includes("Потерялся") || rawTypeAd.includes("потер")) typeAdvertisement = 2;
+          else if (rawTypeAd.includes("Найден") || rawTypeAd.includes("найд")) typeAdvertisement = 3;
+          else if (rawTypeAd.includes("передержк")) typeAdvertisement = 4;
+        }
+      }
+
+      if (typeAdvertisement) {
+        values.push(typeAdvertisement);
+        conditions.push(`a.type_advertisement = $${values.length}`);
+      }
+
+      // Фильтр по минимальному возрасту
+      if (minAge !== null && minAge !== undefined && minAge !== "" && !isNaN(parseFloat(minAge))) {
         values.push(parseFloat(minAge));
         conditions.push(`an.age >= $${values.length}`);
       }
 
-      if (maxAge) {
+      // Фильтр по максимальному возрасту
+      if (maxAge !== null && maxAge !== undefined && maxAge !== "" && !isNaN(parseFloat(maxAge))) {
         values.push(parseFloat(maxAge));
         conditions.push(`an.age <= $${values.length}`);
       }
 
+      // Фильтр по городу
+      if (city && city !== "Любой" && city !== "Все" && city !== "null") {
+        values.push(`%${city}%`);
+        conditions.push(`a.location_name ILIKE $${values.length}`);
+      }
+
+      // Фильтры быстрых тегов «Важно для дома»
+      const isSterilized = params.is_sterilized !== undefined ? params.is_sterilized : params.sterilized;
+      const isVaccinated = params.is_vaccinated !== undefined ? params.is_vaccinated : params.vaccinated;
+      const goodWithKids = params.good_with_kids !== undefined ? params.good_with_kids : params.kids;
+      const goodWithAnimals = params.good_with_animals !== undefined ? params.good_with_animals : params.animals;
+
+      if (isSterilized === true || isSterilized === "true" || isSterilized === 1 || isSterilized === "1") {
+        conditions.push("an.is_sterilized = true");
+      }
+      if (isVaccinated === true || isVaccinated === "true" || isVaccinated === 1 || isVaccinated === "1") {
+        conditions.push("an.is_vaccinated = true");
+      }
+      if (goodWithKids === true || goodWithKids === "true" || goodWithKids === 1 || goodWithKids === "1") {
+        conditions.push("an.good_with_kids = true");
+      }
+      if (goodWithAnimals === true || goodWithAnimals === "true" || goodWithAnimals === 1 || goodWithAnimals === "1") {
+        conditions.push("an.good_with_animals = true");
+      }
+
+      // Текстовый поиск по кличке, породе и описанию
       if (search) {
         values.push(`%${search}%`);
         conditions.push(`
-    (an.animal_name ILIKE $${values.length} 
-    OR an.breed ILIKE $${values.length} 
-    OR an.description ILIKE $${values.length})
-  `);
+          (an.animal_name ILIKE $${values.length} 
+          OR an.breed ILIKE $${values.length} 
+          OR an.description ILIKE $${values.length})
+        `);
       }
 
       let whereClause = conditions.length
         ? `WHERE ${conditions.join(" AND ")}`
         : "";
 
+      // Сортировка
+      let orderClause = "ORDER BY a.created_at DESC";
+      if (sortBy === "oldest") {
+        orderClause = "ORDER BY a.created_at ASC";
+      } else if (sortBy === "age_asc") {
+        orderClause = "ORDER BY an.age ASC NULLS LAST";
+      } else if (sortBy === "age_desc") {
+        orderClause = "ORDER BY an.age DESC NULLS LAST";
+      }
+
       const ads = await pool.query(
         `
-      SELECT 
-        a.advertisement_id, 
-        a.type_advertisement, 
-        a.status, 
-        a.location_name,
-        a.created_at,
-        an.animal_id, 
-        an.animal_name, 
-        an.age, 
-        an.breed, 
-        an.description, 
-        an.type_id,
-        u.user_id, 
-        u.user_name, 
-        u.user_surname,
-        (
-          SELECT ap.animal_photo_url 
-          FROM animal_photos ap 
-          WHERE ap.animal_id = an.animal_id 
-          ORDER BY ap.animal_photo_id DESC 
-          LIMIT 1
-        ) AS preview_photo
-      FROM advertisement a
-      JOIN animal an ON a.animal_id = an.animal_id
-      JOIN "user" u ON a.user_id = u.user_id
-      ${whereClause}
-      ORDER BY a.created_at DESC
-      `,
+        SELECT 
+          a.advertisement_id, 
+          a.type_advertisement, 
+          a.status, 
+          a.location_name,
+          a.created_at,
+          an.animal_id, 
+          an.animal_name, 
+          an.age, 
+          an.breed, 
+          an.description, 
+          an.type_id,
+          an.is_sterilized,
+          an.is_vaccinated,
+          an.good_with_kids,
+          an.good_with_animals,
+          u.user_id, 
+          u.user_name, 
+          u.user_surname,
+          u.user_type,
+          (
+            SELECT ap.animal_photo_url 
+            FROM animal_photos ap 
+            WHERE ap.animal_id = an.animal_id 
+            ORDER BY ap.animal_photo_id DESC 
+            LIMIT 1
+          ) AS preview_photo
+        FROM advertisement a
+        JOIN animal an ON a.animal_id = an.animal_id
+        JOIN "user" u ON a.user_id = u.user_id
+        ${whereClause}
+        ${orderClause}
+        `,
         values
       );
 
       res.json(ads.rows);
     } catch (e) {
-      console.error(e);
+      console.error("Ошибка в getAllFilter:", e);
       next(ApiError.internal("Ошибка при получении объявлений"));
     }
   }
@@ -256,9 +357,14 @@ class AdvertisementController {
         an.breed, 
         an.description, 
         an.type_id,
+        an.is_sterilized,
+        an.is_vaccinated,
+        an.good_with_kids,
+        an.good_with_animals,
         u.user_id, 
         u.user_name, 
         u.user_surname,
+        u.user_type,
         (
           SELECT ap.animal_photo_url 
           FROM animal_photos ap 
@@ -304,6 +410,10 @@ class AdvertisementController {
         an.breed,
         an.description,
         an.type_id,
+        an.is_sterilized,
+        an.is_vaccinated,
+        an.good_with_kids,
+        an.good_with_animals,
         u.user_id,
         u.user_name,
         u.user_surname,
@@ -374,6 +484,11 @@ class AdvertisementController {
         tutor_name,
         tutor_number,
         tutor_email,
+        type_advertisement,
+        is_sterilized,
+        is_vaccinated,
+        good_with_kids,
+        good_with_animals,
       } = req.body;
       console.log(tutor_name);
       const files = req.files?.photos
@@ -382,24 +497,67 @@ class AdvertisementController {
           : [req.files.photos]
         : [];
 
-      // Получаем animal_id
+      // Получаем объявление и проверяем существование
       const adQuery = await pool.query(
-        `SELECT animal_id FROM advertisement WHERE advertisement_id = $1`,
+        `SELECT user_id, animal_id FROM advertisement WHERE advertisement_id = $1`,
         [id]
       );
       if (!adQuery.rows.length)
         return next(ApiError.badRequest("Объявление не найдено"));
-      const animal_id = adQuery.rows[0].animal_id;
+      const ad = adQuery.rows[0];
+      const animal_id = ad.animal_id;
+
+      // Права на редактирование: автор ИЛИ модератор (user_type === 4)
+      const isOwner = Number(ad.user_id) === Number(req.user?.id);
+      const isModerator = Number(req.user?.user_type) === 4;
+      if (!isOwner && !isModerator) {
+        return res
+          .status(403)
+          .json({ message: "Нет прав на редактирование этого объявления" });
+      }
+
+      // Преобразование булевых значений
+      const isSterilized = is_sterilized !== undefined ? (is_sterilized === true || is_sterilized === "true" || is_sterilized === 1 || is_sterilized === "1") : null;
+      const isVaccinated = is_vaccinated !== undefined ? (is_vaccinated === true || is_vaccinated === "true" || is_vaccinated === 1 || is_vaccinated === "1") : null;
+      const goodWithKids = good_with_kids !== undefined ? (good_with_kids === true || good_with_kids === "true" || good_with_kids === 1 || good_with_kids === "1") : null;
+      const goodWithAnimals = good_with_animals !== undefined ? (good_with_animals === true || good_with_animals === "true" || good_with_animals === 1 || good_with_animals === "1") : null;
 
       // Обновляем животное
       await pool.query(
-        `UPDATE animal SET animal_name=$1, breed=$2, age=$3, description=$4 WHERE animal_id=$5`,
-        [animal_name, breed, age || null, description || null, animal_id]
+        `UPDATE animal 
+         SET animal_name=$1, breed=$2, age=$3, description=$4,
+             is_sterilized=COALESCE($5, is_sterilized),
+             is_vaccinated=COALESCE($6, is_vaccinated),
+             good_with_kids=COALESCE($7, good_with_kids),
+             good_with_animals=COALESCE($8, good_with_animals)
+         WHERE animal_id=$9`,
+        [
+          animal_name,
+          breed,
+          age || null,
+          description || null,
+          isSterilized,
+          isVaccinated,
+          goodWithKids,
+          goodWithAnimals,
+          animal_id,
+        ]
       );
 
       await pool.query(
-        `UPDATE advertisement SET tutor_name=$1, tutor_number=$2, tutor_email=$3 WHERE advertisement_id = $4`,
-        [tutor_name || null, tutor_number || null, tutor_email || null, id]
+        `UPDATE advertisement 
+         SET tutor_name=$1, tutor_number=$2, tutor_email=$3, 
+             type_advertisement=COALESCE($4, type_advertisement),
+             location_name=COALESCE($5, location_name)
+         WHERE advertisement_id = $6`,
+        [
+          tutor_name || null,
+          tutor_number || null,
+          tutor_email || null,
+          type_advertisement ? parseInt(type_advertisement) : null,
+          location_name || null,
+          id,
+        ]
       );
 
       // Обновляем местоположение (если указано)
@@ -494,8 +652,10 @@ class AdvertisementController {
 
       const ad = adResult.rows[0];
 
-      // Проверяем права пользователя
-      if (ad.user_id !== userId) {
+      // Проверяем права пользователя: автор ИЛИ модератор (user_type === 4)
+      const isOwner = Number(ad.user_id) === Number(userId);
+      const isModerator = Number(req.user?.user_type) === 4;
+      if (!isOwner && !isModerator) {
         return res
           .status(403)
           .json({ message: "Нет прав на удаление этого объявления" });
@@ -565,6 +725,64 @@ class AdvertisementController {
       return next(
         ApiError.internal("Ошибка при получении объявлений пользователя")
       );
+    }
+  }
+
+  // Получить все объявления для панели модератора (user_type === 4)
+  async getModerationAll(req, res, next) {
+    try {
+      const isModerator = Number(req.user?.user_type) === 4;
+      if (!isModerator) {
+        return res
+          .status(403)
+          .json({ message: "Доступ запрещен. Требуются права модератора" });
+      }
+
+      const ads = await pool.query(
+        `
+        SELECT 
+          a.advertisement_id, 
+          a.type_advertisement, 
+          a.status, 
+          a.location_name,
+          a.created_at,
+          a.tutor_name,
+          a.tutor_number,
+          a.tutor_email,
+          an.animal_id, 
+          an.animal_name, 
+          an.age, 
+          an.breed, 
+          an.description, 
+          an.type_id,
+          an.is_sterilized,
+          an.is_vaccinated,
+          an.good_with_kids,
+          an.good_with_animals,
+          u.user_id, 
+          u.user_name, 
+          u.user_surname,
+          u.user_email,
+          u.user_phone,
+          u.user_type,
+          (
+            SELECT ap.animal_photo_url 
+            FROM animal_photos ap 
+            WHERE ap.animal_id = an.animal_id 
+            ORDER BY ap.animal_photo_id DESC 
+            LIMIT 1
+          ) AS preview_photo
+        FROM advertisement a
+        JOIN animal an ON a.animal_id = an.animal_id
+        JOIN "user" u ON a.user_id = u.user_id
+        ORDER BY a.created_at DESC
+        `
+      );
+
+      return res.json(ads.rows);
+    } catch (e) {
+      console.error("Ошибка при получении объявлений для модерации:", e);
+      return next(ApiError.internal("Ошибка при получении объявлений"));
     }
   }
 }

@@ -1,17 +1,21 @@
 import React, { useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Card, Button, Form, Tabs, Tab, Spinner } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { observer } from "mobx-react-lite";
 import { Context } from "../index";
 import { login, registration } from "../http/userAPI";
-import { SHOP_ROUTE } from "../utils/consts";
+import { SHOP_ROUTE, REGISTRATION_ROUTE, PRIVACY_ROUTE, TERMS_ROUTE } from "../utils/consts";
 
 const Auth = observer(() => {
   const { user } = useContext(Context);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(
+    location.pathname === REGISTRATION_ROUTE ? "signup" : "login"
+  );
 
   // ---------------- Вход ----------------
   const [email, setEmail] = useState("");
@@ -29,9 +33,10 @@ const Auth = observer(() => {
   const [shelterAddress, setShelterAddress] = useState("");
   const [shelterDescription, setShelterDescription] = useState("");
   const [shelterWebsite, setShelterWebsite] = useState("");
-  const [location, setLocation] = useState("");
+  const [city, setCity] = useState("");
   const [avatar, setAvatar] = useState(null);
   const [isVolunteer, setIsVolunteer] = useState(false);
+  const [agreePolicy, setAgreePolicy] = useState(false);
 
   useEffect(() => {
     if (user.isAuth) {
@@ -62,6 +67,11 @@ const Auth = observer(() => {
 
     if (signupPassword !== confirmPassword) {
       toast.error("Пароли не совпадают");
+      return;
+    }
+
+    if (!agreePolicy) {
+      toast.error("Необходимо согласиться с Политикой конфиденциальности");
       return;
     }
 
@@ -110,7 +120,12 @@ const Auth = observer(() => {
   return (
     <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light p-3">
       <Card style={{ width: "100%", maxWidth: "450px" }} className="p-3">
-        <Tabs defaultActiveKey="login" id="auth-tabs" className="mb-3">
+        <Tabs
+          activeKey={activeTab}
+          onSelect={(k) => setActiveTab(k)}
+          id="auth-tabs"
+          className="mb-3"
+        >
           {/* ---------- Вход ---------- */}
           <Tab eventKey="login" title="Вход">
             <Form onSubmit={handleLogin}>
@@ -206,8 +221,8 @@ const Auth = observer(() => {
                     <Form.Label>Город</Form.Label>
                     <Form.Control
                       type="text"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
                     />
                   </Form.Group>
                 </>
@@ -301,6 +316,28 @@ const Auth = observer(() => {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setAvatar(e.target.files[0])}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  id="agree-policy-check"
+                  checked={agreePolicy}
+                  onChange={(e) => setAgreePolicy(e.target.checked)}
+                  required
+                  label={
+                    <span className="small text-muted">
+                      Я согласен на обработку персональных данных и принимаю{" "}
+                      <Link to={PRIVACY_ROUTE} target="_blank" className="text-warning text-decoration-none">
+                        Политику конфиденциальности
+                      </Link>{" "}
+                      и{" "}
+                      <Link to={TERMS_ROUTE} target="_blank" className="text-warning text-decoration-none">
+                        Условия
+                      </Link>
+                    </span>
+                  }
                 />
               </Form.Group>
 

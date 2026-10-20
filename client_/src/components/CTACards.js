@@ -1,8 +1,27 @@
-import React from "react";
-import { Container, Row, Col } from "react-bootstrap";
+import React, { useContext } from "react";
+import { Container, Row, Col, Button } from "react-bootstrap";
 import { Search, MapPin, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Context } from "../index";
+import { CREATE_ADS_ROUTE, HELP_ROUTE, LOGIN_ROUTE } from "../utils/consts";
 
 const CTACards = () => {
+  const navigate = useNavigate();
+  const { user } = useContext(Context);
+
+  const handleAction = (type) => {
+    if (type === "help") {
+      navigate(HELP_ROUTE);
+      return;
+    }
+
+    if (user.isAuth) {
+      navigate(CREATE_ADS_ROUTE);
+    } else {
+      navigate(LOGIN_ROUTE);
+    }
+  };
+
   const cards = [
     {
       icon: <Search size={40} className="text-danger" />,
@@ -10,7 +29,8 @@ const CTACards = () => {
       description:
         "Разместите объявление о пропаже. Наша сеть волонтеров поможет в поисках.",
       action: "Сообщить о пропаже",
-      btnClass: "btn btn-danger w-100",
+      btnVariant: "danger",
+      type: "lost",
     },
     {
       icon: <MapPin size={40} className="text-primary" />,
@@ -18,7 +38,8 @@ const CTACards = () => {
       description:
         "Сообщите о найденном животном. Поможем найти хозяев или временный дом.",
       action: "Сообщить о находке",
-      btnClass: "btn btn-primary w-100",
+      btnVariant: "primary",
+      type: "found",
     },
     {
       icon: <Heart size={40} className="text-success" />,
@@ -26,7 +47,8 @@ const CTACards = () => {
       description:
         "Станьте волонтером, усыновите питомца или поддержите проект финансово.",
       action: "Начать помогать",
-      btnClass: "btn btn-success w-100",
+      btnVariant: "success",
+      type: "help",
     },
   ];
 
@@ -44,11 +66,17 @@ const CTACards = () => {
         <Row>
           {cards.map((card, index) => (
             <Col key={index} md={4} className="mb-4">
-              <div className="card h-100 shadow-sm text-center p-4">
+              <div className="card h-100 shadow-sm text-center p-4 border-0 rounded-4">
                 <div className="mb-3">{card.icon}</div>
                 <h5 className="fw-semibold">{card.title}</h5>
-                <p className="text-muted">{card.description}</p>
-                <button className={card.btnClass}>{card.action}</button>
+                <p className="text-muted flex-grow-1">{card.description}</p>
+                <Button
+                  variant={card.btnVariant}
+                  className="w-100 fw-semibold"
+                  onClick={() => handleAction(card.type)}
+                >
+                  {card.action}
+                </Button>
               </div>
             </Col>
           ))}

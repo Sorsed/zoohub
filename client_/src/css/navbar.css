@@ -12,3 +12,35 @@
   color: black; /* текст остаётся черным */
   box-shadow: none; /* убирает тень при фокусе */
 }
+
+/* Фиксация шапки и меню поверх контента страницы */
+.navbar.sticky-top {
+  z-index: 1050 !important;
+  position: sticky !important;
+  top: 0;
+}
+
+.top-service-bar {
+  position: relative;
+  z-index: 1051;
+}
+
+.navbar-collapse {
+  position: relative;
+  z-index: 1052;
+}
+
+/* Карточка фильтров каталога питомцев */
+.find-pet-filter-card {
+  position: sticky;
+  top: 90px;
+  z-index: 10;
+}
+
+@media (max-width: 991.98px) {
+  .find-pet-filter-card {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+  }
+}

@@ -1,0 +1,603 @@
+/* =========================================================
+   Режим для слабовидящих (Accessibility Mode)
+   ГОСТ Р 52872-2019 / WCAG 2.1 AAA
+   ========================================================= */
+
+/* Панель управления доступностью (Top Accessibility Bar) */
+.accessibility-bar {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 10px 16px;
+  font-size: 15px;
+  border-bottom: 3px solid #ffc107;
+  position: relative;
+  z-index: 1060;
+}
+
+.accessibility-bar .btn-access {
+  padding: 6px 14px;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: #ffffff;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.accessibility-bar .btn-access:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ffc107;
+  color: #ffffff;
+}
+
+.accessibility-bar .btn-access.active {
+  background: #ffc107;
+  color: #000000 !important;
+  border-color: #ffc107;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
+}
+
+.accessibility-bar .color-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  transition: transform 0.1s ease;
+}
+
+.accessibility-bar .color-btn:hover {
+  transform: scale(1.1);
+}
+
+.accessibility-bar .color-btn.active {
+  outline: 4px solid #ffc107;
+  outline-offset: 2px;
+}
+
+/* Кнопки цветовых схем в тулбаре */
+.color-btn-wb {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.color-btn-bw {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.color-btn-bc {
+  background: #99ccff !important;
+  color: #003366 !important;
+  border-color: #003366 !important;
+}
+
+.color-btn-bb {
+  background: #f7f0df !important;
+  color: #4a3011 !important;
+  border-color: #4a3011 !important;
+}
+
+/* =========================================================
+   ОБЩИЕ СТИЛИ РЕЖИМА ДОСТУПНОСТИ
+   ========================================================= */
+body.accessibility-mode {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+  font-weight: 500 !important;
+  line-height: 1.7 !important;
+}
+
+body.accessibility-mode p,
+body.accessibility-mode span:not(.badge):not(.accessibility-bar span),
+body.accessibility-mode a,
+body.accessibility-mode div:not(.accessibility-bar div),
+body.accessibility-mode button:not(.btn-access),
+body.accessibility-mode input,
+body.accessibility-mode select,
+body.accessibility-mode textarea,
+body.accessibility-mode label,
+body.accessibility-mode li {
+  font-weight: 500 !important;
+}
+
+body.accessibility-mode h1,
+body.accessibility-mode h2,
+body.accessibility-mode h3,
+body.accessibility-mode h4,
+body.accessibility-mode h5,
+body.accessibility-mode h6,
+body.accessibility-mode .fw-bold,
+body.accessibility-mode .fw-semibold {
+  font-weight: 800 !important;
+}
+
+body.accessibility-mode a {
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 4px !important;
+  font-weight: 700 !important;
+}
+
+body.accessibility-mode button,
+body.accessibility-mode .btn {
+  text-decoration: none !important;
+  font-weight: 700 !important;
+  padding: 10px 18px !important;
+}
+
+body.accessibility-mode *:focus {
+  outline: 4px solid #ffaa00 !important;
+  outline-offset: 3px !important;
+}
+
+/* Рамки 3px для всех ключевых элементов */
+body.accessibility-mode .card,
+body.accessibility-mode .border,
+body.accessibility-mode .form-control,
+body.accessibility-mode .form-select,
+body.accessibility-mode .btn:not(.btn-access),
+body.accessibility-mode button:not(.btn-access):not(.color-btn),
+body.accessibility-mode .modal-content,
+body.accessibility-mode .navbar,
+body.accessibility-mode .dropdown-menu,
+body.accessibility-mode .ad-card-container {
+  border-width: 3px !important;
+  border-style: solid !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+body.accessibility-mode img {
+  border: 3px solid currentColor !important;
+  border-radius: 6px !important;
+}
+
+/* =========================================================
+   ШРИФТОВЫЕ РАЗМЕРЫ (Сразу заметные и крупные)
+   ========================================================= */
+
+/* 1) font-large (ПО УМОЛЧАНИЮ) -> 20px */
+body.accessibility-mode.font-large {
+  font-size: 20px !important;
+}
+
+body.accessibility-mode.font-large p,
+body.accessibility-mode.font-large span:not(.badge):not(.accessibility-bar *),
+body.accessibility-mode.font-large a,
+body.accessibility-mode.font-large button:not(.btn-access),
+body.accessibility-mode.font-large input,
+body.accessibility-mode.font-large select,
+body.accessibility-mode.font-large textarea,
+body.accessibility-mode.font-large label,
+body.accessibility-mode.font-large li,
+body.accessibility-mode.font-large .nav-link,
+body.accessibility-mode.font-large .lead,
+body.accessibility-mode.font-large .small {
+  font-size: 20px !important;
+}
+
+body.accessibility-mode.font-large h1,
+body.accessibility-mode.font-large .display-4 {
+  font-size: 38px !important;
+}
+
+body.accessibility-mode.font-large h2,
+body.accessibility-mode.font-large .display-6 {
+  font-size: 32px !important;
+}
+
+body.accessibility-mode.font-large h3 {
+  font-size: 28px !important;
+}
+
+body.accessibility-mode.font-large h4 {
+  font-size: 25px !important;
+}
+
+body.accessibility-mode.font-large h5 {
+  font-size: 22px !important;
+}
+
+body.accessibility-mode.font-large .badge {
+  font-size: 16px !important;
+  padding: 6px 12px !important;
+}
+
+/* 2) font-xlarge -> 24px */
+body.accessibility-mode.font-xlarge {
+  font-size: 24px !important;
+}
+
+body.accessibility-mode.font-xlarge p,
+body.accessibility-mode.font-xlarge span:not(.badge):not(.accessibility-bar *),
+body.accessibility-mode.font-xlarge a,
+body.accessibility-mode.font-xlarge button:not(.btn-access),
+body.accessibility-mode.font-xlarge input,
+body.accessibility-mode.font-xlarge select,
+body.accessibility-mode.font-xlarge textarea,
+body.accessibility-mode.font-xlarge label,
+body.accessibility-mode.font-xlarge li,
+body.accessibility-mode.font-xlarge .nav-link,
+body.accessibility-mode.font-xlarge .lead,
+body.accessibility-mode.font-xlarge .small {
+  font-size: 24px !important;
+}
+
+body.accessibility-mode.font-xlarge h1,
+body.accessibility-mode.font-xlarge .display-4 {
+  font-size: 44px !important;
+}
+
+body.accessibility-mode.font-xlarge h2,
+body.accessibility-mode.font-xlarge .display-6 {
+  font-size: 38px !important;
+}
+
+body.accessibility-mode.font-xlarge h3 {
+  font-size: 32px !important;
+}
+
+body.accessibility-mode.font-xlarge h4 {
+  font-size: 28px !important;
+}
+
+body.accessibility-mode.font-xlarge h5 {
+  font-size: 26px !important;
+}
+
+body.accessibility-mode.font-xlarge .badge {
+  font-size: 18px !important;
+  padding: 8px 14px !important;
+}
+
+/* 3) font-huge -> 28px */
+body.accessibility-mode.font-huge {
+  font-size: 28px !important;
+}
+
+body.accessibility-mode.font-huge p,
+body.accessibility-mode.font-huge span:not(.badge):not(.accessibility-bar *),
+body.accessibility-mode.font-huge a,
+body.accessibility-mode.font-huge button:not(.btn-access),
+body.accessibility-mode.font-huge input,
+body.accessibility-mode.font-huge select,
+body.accessibility-mode.font-huge textarea,
+body.accessibility-mode.font-huge label,
+body.accessibility-mode.font-huge li,
+body.accessibility-mode.font-huge .nav-link,
+body.accessibility-mode.font-huge .lead,
+body.accessibility-mode.font-huge .small {
+  font-size: 28px !important;
+}
+
+body.accessibility-mode.font-huge h1,
+body.accessibility-mode.font-huge .display-4 {
+  font-size: 52px !important;
+}
+
+body.accessibility-mode.font-huge h2,
+body.accessibility-mode.font-huge .display-6 {
+  font-size: 44px !important;
+}
+
+body.accessibility-mode.font-huge h3 {
+  font-size: 38px !important;
+}
+
+body.accessibility-mode.font-huge h4 {
+  font-size: 34px !important;
+}
+
+body.accessibility-mode.font-huge h5 {
+  font-size: 30px !important;
+}
+
+body.accessibility-mode.font-huge .badge {
+  font-size: 20px !important;
+  padding: 10px 16px !important;
+}
+
+/* ---------------------------------------------------------
+   Интервалы между буквами (Кернинг)
+   --------------------------------------------------------- */
+body.accessibility-mode.spacing-medium * {
+  letter-spacing: 2px !important;
+}
+
+body.accessibility-mode.spacing-large * {
+  letter-spacing: 4px !important;
+}
+
+/* ---------------------------------------------------------
+   Скрытие изображений
+   --------------------------------------------------------- */
+body.accessibility-mode.hide-images img:not(.accessibility-icon),
+body.accessibility-mode.hide-images .carousel-item img,
+body.accessibility-mode.hide-images .carousel,
+body.accessibility-mode.hide-images .ymaps-2-1-79-map {
+  display: none !important;
+}
+
+/* =========================================================
+   ЦВЕТОВАЯ СХЕМА 1: ЧЕРНЫМ ПО БЕЛОМУ (White - Black)
+   ========================================================= */
+body.accessibility-mode.scheme-white-black {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+body.accessibility-mode.scheme-white-black header,
+body.accessibility-mode.scheme-white-black nav,
+body.accessibility-mode.scheme-white-black .navbar,
+body.accessibility-mode.scheme-white-black .card,
+body.accessibility-mode.scheme-white-black footer,
+body.accessibility-mode.scheme-white-black .modal-content,
+body.accessibility-mode.scheme-white-black .dropdown-menu,
+body.accessibility-mode.scheme-white-black section,
+body.accessibility-mode.scheme-white-black main,
+body.accessibility-mode.scheme-white-black .bg-light,
+body.accessibility-mode.scheme-white-black .bg-white,
+body.accessibility-mode.scheme-white-black .top-service-bar {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+body.accessibility-mode.scheme-white-black .card,
+body.accessibility-mode.scheme-white-black .border,
+body.accessibility-mode.scheme-white-black .ad-card-container {
+  border: 3px solid #000000 !important;
+}
+
+body.accessibility-mode.scheme-white-black a,
+body.accessibility-mode.scheme-white-black .nav-link,
+body.accessibility-mode.scheme-white-black .navbar-brand {
+  color: #000000 !important;
+}
+
+body.accessibility-mode.scheme-white-black .btn:not(.btn-access),
+body.accessibility-mode.scheme-white-black button:not(.btn-access):not(.color-btn) {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+}
+
+body.accessibility-mode.scheme-white-black .btn:hover:not(.btn-access),
+body.accessibility-mode.scheme-white-black button:hover:not(.btn-access):not(.color-btn) {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.accessibility-mode.scheme-white-black .form-control,
+body.accessibility-mode.scheme-white-black .form-select {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+}
+
+body.accessibility-mode.scheme-white-black .badge {
+  border: 2px solid #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+body.accessibility-mode.scheme-white-black .text-muted,
+body.accessibility-mode.scheme-white-black .text-secondary {
+  color: #111111 !important;
+}
+
+/* =========================================================
+   ЦВЕТОВАЯ СХЕМА 2: БЕЛЫМ ПО ЧЕРНОМУ (Black - White)
+   ========================================================= */
+body.accessibility-mode.scheme-black-white {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.accessibility-mode.scheme-black-white header,
+body.accessibility-mode.scheme-black-white nav,
+body.accessibility-mode.scheme-black-white .navbar,
+body.accessibility-mode.scheme-black-white .card,
+body.accessibility-mode.scheme-black-white footer,
+body.accessibility-mode.scheme-black-white .modal-content,
+body.accessibility-mode.scheme-black-white .dropdown-menu,
+body.accessibility-mode.scheme-black-white section,
+body.accessibility-mode.scheme-black-white main,
+body.accessibility-mode.scheme-black-white .bg-light,
+body.accessibility-mode.scheme-black-white .bg-white,
+body.accessibility-mode.scheme-black-white .top-service-bar {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+body.accessibility-mode.scheme-black-white .card,
+body.accessibility-mode.scheme-black-white .border,
+body.accessibility-mode.scheme-black-white .ad-card-container {
+  border: 3px solid #ffffff !important;
+}
+
+body.accessibility-mode.scheme-black-white a,
+body.accessibility-mode.scheme-black-white .nav-link,
+body.accessibility-mode.scheme-black-white .navbar-brand {
+  color: #ffff00 !important;
+}
+
+body.accessibility-mode.scheme-black-white .btn:not(.btn-access),
+body.accessibility-mode.scheme-black-white button:not(.btn-access):not(.color-btn) {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 3px solid #ffffff !important;
+}
+
+body.accessibility-mode.scheme-black-white .btn:hover:not(.btn-access),
+body.accessibility-mode.scheme-black-white button:hover:not(.btn-access):not(.color-btn) {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+body.accessibility-mode.scheme-black-white .form-control,
+body.accessibility-mode.scheme-black-white .form-select {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 3px solid #ffffff !important;
+}
+
+body.accessibility-mode.scheme-black-white .badge {
+  border: 2px solid #ffffff !important;
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+}
+
+body.accessibility-mode.scheme-black-white .text-muted,
+body.accessibility-mode.scheme-black-white .text-secondary {
+  color: #e0e0e0 !important;
+}
+
+/* =========================================================
+   ЦВЕТОВАЯ СХЕМА 3: ТЕМНО-СИНИМ ПО ГОЛУБОМУ (Blue - Cyan)
+   ========================================================= */
+body.accessibility-mode.scheme-blue-cyan {
+  background-color: #cbe8f8 !important;
+  color: #063462 !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan header,
+body.accessibility-mode.scheme-blue-cyan nav,
+body.accessibility-mode.scheme-blue-cyan .navbar,
+body.accessibility-mode.scheme-blue-cyan .card,
+body.accessibility-mode.scheme-blue-cyan footer,
+body.accessibility-mode.scheme-blue-cyan .modal-content,
+body.accessibility-mode.scheme-blue-cyan .dropdown-menu,
+body.accessibility-mode.scheme-blue-cyan section,
+body.accessibility-mode.scheme-blue-cyan main,
+body.accessibility-mode.scheme-blue-cyan .bg-light,
+body.accessibility-mode.scheme-blue-cyan .bg-white,
+body.accessibility-mode.scheme-blue-cyan .top-service-bar {
+  background-color: #cbe8f8 !important;
+  color: #063462 !important;
+  border-color: #063462 !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan .card,
+body.accessibility-mode.scheme-blue-cyan .border,
+body.accessibility-mode.scheme-blue-cyan .ad-card-container {
+  border: 3px solid #063462 !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan a,
+body.accessibility-mode.scheme-blue-cyan .nav-link,
+body.accessibility-mode.scheme-blue-cyan .navbar-brand {
+  color: #042241 !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan .btn:not(.btn-access),
+body.accessibility-mode.scheme-blue-cyan button:not(.btn-access):not(.color-btn) {
+  background-color: #cbe8f8 !important;
+  color: #063462 !important;
+  border: 3px solid #063462 !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan .btn:hover:not(.btn-access),
+body.accessibility-mode.scheme-blue-cyan button:hover:not(.btn-access):not(.color-btn) {
+  background-color: #063462 !important;
+  color: #ffffff !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan .form-control,
+body.accessibility-mode.scheme-blue-cyan .form-select {
+  background-color: #cbe8f8 !important;
+  color: #063462 !important;
+  border: 3px solid #063462 !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan .badge {
+  border: 2px solid #063462 !important;
+  background-color: #b6ddf4 !important;
+  color: #063462 !important;
+}
+
+body.accessibility-mode.scheme-blue-cyan .text-muted,
+body.accessibility-mode.scheme-blue-cyan .text-secondary {
+  color: #0b457f !important;
+}
+
+/* =========================================================
+   ЦВЕТОВАЯ СХЕМА 4: КОРИЧНЕВЫМ ПО БЕЖЕВОМУ (Brown - Beige)
+   ========================================================= */
+body.accessibility-mode.scheme-brown-beige {
+  background-color: #f7f0df !important;
+  color: #4a3011 !important;
+}
+
+body.accessibility-mode.scheme-brown-beige header,
+body.accessibility-mode.scheme-brown-beige nav,
+body.accessibility-mode.scheme-brown-beige .navbar,
+body.accessibility-mode.scheme-brown-beige .card,
+body.accessibility-mode.scheme-brown-beige footer,
+body.accessibility-mode.scheme-brown-beige .modal-content,
+body.accessibility-mode.scheme-brown-beige .dropdown-menu,
+body.accessibility-mode.scheme-brown-beige section,
+body.accessibility-mode.scheme-brown-beige main,
+body.accessibility-mode.scheme-brown-beige .bg-light,
+body.accessibility-mode.scheme-brown-beige .bg-white,
+body.accessibility-mode.scheme-brown-beige .top-service-bar {
+  background-color: #f7f0df !important;
+  color: #4a3011 !important;
+  border-color: #4a3011 !important;
+}
+
+body.accessibility-mode.scheme-brown-beige .card,
+body.accessibility-mode.scheme-brown-beige .border,
+body.accessibility-mode.scheme-brown-beige .ad-card-container {
+  border: 3px solid #4a3011 !important;
+}
+
+body.accessibility-mode.scheme-brown-beige a,
+body.accessibility-mode.scheme-brown-beige .nav-link,
+body.accessibility-mode.scheme-brown-beige .navbar-brand {
+  color: #31200b !important;
+}
+
+body.accessibility-mode.scheme-brown-beige .btn:not(.btn-access),
+body.accessibility-mode.scheme-brown-beige button:not(.btn-access):not(.color-btn) {
+  background-color: #f7f0df !important;
+  color: #4a3011 !important;
+  border: 3px solid #4a3011 !important;
+}
+
+body.accessibility-mode.scheme-brown-beige .btn:hover:not(.btn-access),
+body.accessibility-mode.scheme-brown-beige button:hover:not(.btn-access):not(.color-btn) {
+  background-color: #4a3011 !important;
+  color: #ffffff !important;
+}
+
+body.accessibility-mode.scheme-brown-beige .form-control,
+body.accessibility-mode.scheme-brown-beige .form-select {
+  background-color: #f7f0df !important;
+  color: #4a3011 !important;
+  border: 3px solid #4a3011 !important;
+}
+
+body.accessibility-mode.scheme-brown-beige .badge {
+  border: 2px solid #4a3011 !important;
+  background-color: #eedfbf !important;
+  color: #4a3011 !important;
+}
+
+body.accessibility-mode.scheme-brown-beige .text-muted,
+body.accessibility-mode.scheme-brown-beige .text-secondary {
+  color: #4b3419 !important;
+}

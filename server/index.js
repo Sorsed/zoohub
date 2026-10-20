@@ -3,48 +3,70 @@ const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
+const fs = require("fs");
+const path = require("path");
 
 const pool = require("./db");
 const router = require("./routes/index");
 const errorHandler = require("./middleware/ErrorHandlingMiddleware");
 const fileUpload = require("express-fileupload");
-const path = require("path");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ==================== Middleware ====================
+// Доверие прокси (для Render, Heroku и HTTPS-прокси)
+app.set("trust proxy", 1);
 
+// ==================== Middleware ====================
 app.use(
   cors({
-    origin: "http://localhost:3000", // ваш фронтенд
-    credentials: true, // разрешаем cookies
+    origin: true, // автоматически разрешает текущий домен и localhost
+    credentials: true,
   })
 );
-app.use(express.urlencoded({ extended: true })); // для форм
-
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use("/static", express.static(path.resolve(__dirname, "static")));
 app.use(express.static(path.resolve(__dirname, "static")));
 app.use(fileUpload({}));
+
 // ==================== Сессии ====================
 app.use(
   session({
     store: new pgSession({
       pool: pool,
-      createTableIfMissing: true, // автоматически создаёт таблицу session
+      createTableIfMissing: true,
     }),
-    secret: "super-secret-key", // лучше хранить в .env
+    secret: process.env.SECRET_KEY || "super-secret-key",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 1 день
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000,
+      secure: false,
+      sameSite: "lax",
+    },
   })
 );
 
-// ==================== Роуты ====================
+// ==================== Роуты API ====================
 app.use("/api", router);
 
-app.get("/", (req, res) => {
-  res.status(200).json({ message: "Server is working" });
-});
+// ==================== Раздача фронтенда (React Build) ====================
+const clientBuildPath = path.resolve(__dirname, "../client_/build");
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath));
+
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+    res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
+} else {
+  app.get("/", (req, res) => {
+    res.status(200).json({ message: "Server is working" });
+  });
+}
 
 // ==================== Проверка подключения к БД ====================
 pool.query("SELECT NOW()", (err, res) => {

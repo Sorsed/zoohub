@@ -1,5 +1,4 @@
 import { makeAutoObservable } from "mobx";
-import { observer } from "mobx-react-lite";
 export default class RecDeviceStore {
   constructor() {
     this._types = [];

@@ -41,6 +41,7 @@ const Profile = observer(() => {
     const fetchProfile = async () => {
       try {
         const data = await getMyprofile();
+        if (!data) return;
         user.setUser(data);
 
         setUserName(data.user_name || "");
@@ -49,12 +50,14 @@ const Profile = observer(() => {
         setUserEmail(data.user_email || "");
         setLocation(data.location_name || "");
 
-        setUserType(data.user_type);
+        setUserType(Number(data.user_type || 1));
 
-        if (data.user_type === 2) {
+        if (Number(data.user_type) === 2) {
           setShelterDescription(data.user_shelter_description || "");
           setShelterWebsite(data.user_shelter_site || "");
           setShelterAddress(data.user_shelter_address || "");
+        } else if (Number(data.user_type) === 3) {
+          setShelterDescription(data.user_shelter_description || "");
         }
 
         if (data.user_ava_photo) {
@@ -102,6 +105,8 @@ const Profile = observer(() => {
         formData.append("user_shelter_description", shelterDescription);
         formData.append("user_shelter_site", shelterWebsite);
         formData.append("user_shelter_address", shelterAddress);
+      } else if (userType === 3) {
+        formData.append("user_shelter_description", shelterDescription);
       }
 
       await updateProfile(formData);
@@ -120,6 +125,7 @@ const Profile = observer(() => {
   const handleCancel = async () => {
     try {
       const data = await getMyprofile();
+      if (!data) return;
       user.setUser(data);
 
       setUserName(data.user_name || "");
@@ -127,11 +133,14 @@ const Profile = observer(() => {
       setUserPhone(data.user_phone || "");
       setUserEmail(data.user_email || "");
       setLocation(data.location_name || "");
+      setUserType(Number(data.user_type || 1));
 
-      if (data.user_type === 2) {
+      if (Number(data.user_type) === 2) {
         setShelterDescription(data.user_shelter_description || "");
         setShelterWebsite(data.user_shelter_site || "");
         setShelterAddress(data.user_shelter_address || "");
+      } else if (Number(data.user_type) === 3) {
+        setShelterDescription(data.user_shelter_description || "");
       }
 
       if (data.user_ava_photo) {
@@ -151,7 +160,7 @@ const Profile = observer(() => {
 
   return (
     <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light p-3">
-      <Card style={{ width: "100%", maxWidth: "550px" }} className="p-3">
+      <Card style={{ width: "100%", maxWidth: "550px" }} className="p-3 shadow-sm border-0 rounded-4">
         <h3 className="text-center mb-3 fw-bold">Мой профиль</h3>
 
         <div className="d-flex flex-column align-items-center mb-3">
@@ -160,8 +169,33 @@ const Profile = observer(() => {
             roundedCircle
             width={150}
             height={150}
-            className="mb-2 border border-2 border-warning"
+            className="mb-2 border border-2 border-warning object-fit-cover"
           />
+
+          {/* Бейдж статуса пользователя */}
+          <div className="text-center mb-2">
+            {userType === 4 && (
+              <span className="badge bg-danger px-3 py-2 fs-6 shadow-sm">
+                🛡️ Статус: Модератор
+              </span>
+            )}
+            {userType === 3 && (
+              <span className="badge bg-success px-3 py-2 fs-6 shadow-sm">
+                🐾 Статус: Волонтёр
+              </span>
+            )}
+            {userType === 2 && (
+              <span className="badge bg-primary px-3 py-2 fs-6 shadow-sm">
+                🏠 Статус: Приют
+              </span>
+            )}
+            {userType === 1 && (
+              <span className="badge bg-secondary px-3 py-2 fs-6">
+                👤 Статус: Пользователь
+              </span>
+            )}
+          </div>
+
           {isEditing && (
             <Form.Group className="mb-3 w-75">
               <Form.Label>Сменить аватар</Form.Label>
@@ -175,8 +209,27 @@ const Profile = observer(() => {
         </div>
 
         <Form onSubmit={handleSubmit}>
-          {(userType === 1 || userType === 3) && (
+          {(userType === 1 || userType === 3 || userType === 4) && (
             <>
+              {/* Переключатель роли волонтёра */}
+              {isEditing && (
+                <div className="mb-3 p-3 bg-light rounded-3 border">
+                  <Form.Check
+                    type="switch"
+                    id="volunteer-switch"
+                    label="Я волонтёр (помогаю животным)"
+                    checked={userType === 3}
+                    onChange={(e) => setUserType(e.target.checked ? 3 : 1)}
+                    className="fw-bold"
+                  />
+                  <Form.Text className="text-muted d-block mt-1">
+                    {userType === 3
+                      ? "Вы будете отображаться с бейджем «Волонтёр» в объявлениях и на вкладке «Волонтёры» на странице партнёров."
+                      : "Включите, если готовы помогать бездомным животным как волонтёр (передержка, автопомощь, поиск)."}
+                  </Form.Text>
+                </div>
+              )}
+
               <Form.Group className="mb-3">
                 <Form.Label>Имя</Form.Label>
                 <Form.Control
@@ -207,6 +260,21 @@ const Profile = observer(() => {
                   disabled={!isEditing}
                 />
               </Form.Group>
+
+              {userType === 3 && (
+                <Form.Group className="mb-3">
+                  <Form.Label>О волонтёрской деятельности / Чем помогаете</Form.Label>
+                  <TextareaAutosize
+                    minRows={2}
+                    value={shelterDescription}
+                    onChange={(e) => setShelterDescription(e.target.value)}
+                    disabled={!isEditing}
+                    placeholder="Например: Передержка кошек, автопомощь по городу Самара, кураторство собак."
+                    className="form-control rounded-3"
+                    style={{ resize: "none", height: "auto", overflow: "hidden" }}
+                  />
+                </Form.Group>
+              )}
             </>
           )}
 

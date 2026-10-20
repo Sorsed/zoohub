@@ -18,8 +18,12 @@ export const FAVOURITES_ROUTE = "/favourites";
 
 // если есть админка
 export const ADMIN_ROUTE = "/admin";
+export const MODERATION_ROUTE = "/moderation";
 
 export const ADS_ROUTE = "/ads";
 export const EDIT_ADS_ROUTE = "/edit_ads";
 export const CREATE_ADS_ROUTE = "/create_ads";
 export const OTHER_PROFILE_PAGE_ROUTE = "/user";
+export const PRIVACY_ROUTE = "/privacy";
+export const TERMS_ROUTE = "/terms";
+export const QUIZ_ROUTE = "/quiz";

@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Form, Button, Spinner, Card, Row, Col, Image } from "react-bootstrap";
-import { Context } from "../index";
 import {
   fetchAdvertisementById,
   updateAdvertisement,
@@ -12,13 +11,13 @@ import defaultAnimal from "../assets/defaultAnimal.png";
 const EditAd = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useContext(Context);
 
   const [ad, setAd] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
+    type_advertisement: "1",
     animal_name: "",
     breed: "",
     age: "",
@@ -29,6 +28,10 @@ const EditAd = () => {
     tutor_name: "",
     tutor_number: "",
     tutor_email: "",
+    is_sterilized: false,
+    is_vaccinated: false,
+    good_with_kids: false,
+    good_with_animals: false,
   });
 
   const [newFiles, setNewFiles] = useState([]); // новые фото
@@ -50,6 +53,7 @@ const EditAd = () => {
 
         setAd(data);
         setFormData({
+          type_advertisement: data.type_advertisement ? String(data.type_advertisement) : "1",
           animal_name: data.animal_name || "",
           breed: data.breed || "",
           age: ageValue,
@@ -62,6 +66,10 @@ const EditAd = () => {
           tutor_name: data.tutor_name || "",
           tutor_number: data.tutor_number || "",
           tutor_email: data.tutor_email || "",
+          is_sterilized: data.is_sterilized || false,
+          is_vaccinated: data.is_vaccinated || false,
+          good_with_kids: data.good_with_kids || false,
+          good_with_animals: data.good_with_animals || false,
         });
 
         // загружаем этапы, если приют
@@ -92,8 +100,11 @@ const EditAd = () => {
 
   // Обработка изменений
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   // Добавление новых фото
@@ -168,13 +179,18 @@ const EditAd = () => {
       updateData.append("age", ageInYears);
       updateData.append("description", formData.description);
       updateData.append("location_name", formData.location_name);
+      updateData.append("type_advertisement", formData.type_advertisement || 1);
 
-      if (ad.user_type === 2) {
-        updateData.append("tutor_name", formData.tutor_name || "");
-        updateData.append("tutor_number", formData.tutor_number || "");
-        updateData.append("tutor_email", formData.tutor_email || "");
-        updateData.append("stages", JSON.stringify(stages));
-      }
+      if (formData.tutor_name) updateData.append("tutor_name", formData.tutor_name || "");
+      if (formData.tutor_number) updateData.append("tutor_number", formData.tutor_number || "");
+      if (formData.tutor_email) updateData.append("tutor_email", formData.tutor_email || "");
+
+      updateData.append("is_sterilized", formData.is_sterilized);
+      updateData.append("is_vaccinated", formData.is_vaccinated);
+      updateData.append("good_with_kids", formData.good_with_kids);
+      updateData.append("good_with_animals", formData.good_with_animals);
+
+      if (stages.length) updateData.append("stages", JSON.stringify(stages));
 
       newFiles.forEach((file) => updateData.append("photos", file));
 
@@ -220,6 +236,20 @@ const EditAd = () => {
         <Form onSubmit={handleSubmit}>
           <Row>
             <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-semibold">Категория объявления</Form.Label>
+                <Form.Select
+                  name="type_advertisement"
+                  value={formData.type_advertisement}
+                  onChange={handleChange}
+                >
+                  <option value="1">Ищет дом / В добрые руки</option>
+                  <option value="2">Потерялся (пропал питомец)</option>
+                  <option value="3">Найден (ищем хозяев)</option>
+                  <option value="4">Нужна передержка</option>
+                </Form.Select>
+              </Form.Group>
+
               <Form.Group className="mb-3">
                 <Form.Label>Имя животного</Form.Label>
                 <Form.Control
@@ -277,15 +307,66 @@ const EditAd = () => {
             </Col>
 
             <Col md={6}>
+              {/* Блок быстрых тегов «Важно для дома» */}
+              <div className="border rounded-3 p-3 mb-3 bg-light">
+                <h6 className="fw-bold mb-2">Важно для дома</h6>
+                <div className="row g-2">
+                  <div className="col-sm-6">
+                    <Form.Check
+                      type="checkbox"
+                      id="edit_is_sterilized"
+                      name="is_sterilized"
+                      label="Стерилизован / кастрирован"
+                      checked={formData.is_sterilized}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="col-sm-6">
+                    <Form.Check
+                      type="checkbox"
+                      id="edit_is_vaccinated"
+                      name="is_vaccinated"
+                      label="Привит"
+                      checked={formData.is_vaccinated}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="col-sm-6">
+                    <Form.Check
+                      type="checkbox"
+                      id="edit_good_with_kids"
+                      name="good_with_kids"
+                      label="Ладит с детьми"
+                      checked={formData.good_with_kids}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="col-sm-6">
+                    <Form.Check
+                      type="checkbox"
+                      id="edit_good_with_animals"
+                      name="good_with_animals"
+                      label="Ладит с другими животными"
+                      checked={formData.good_with_animals}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <Form.Group className="mb-3">
-                <Form.Label>Описание</Form.Label>
+                <Form.Label className="fw-semibold">Описание</Form.Label>
                 <Form.Control
                   as="textarea"
-                  rows={7}
+                  rows={6}
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
+                  placeholder="Расскажите живым языком о характере подопечного, его истории, привычках, приученности к поводку или лотку..."
                 />
+                <Form.Text className="text-muted small">
+                  Пишется свободным текстом. А тонкий подбор под образ жизни выполняет интерактивный квиз!
+                </Form.Text>
               </Form.Group>
             </Col>
           </Row>

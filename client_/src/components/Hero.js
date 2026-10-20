@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Row, Col } from "react-bootstrap";
 import heroImage from "../assets/hero-pets.jpg";
 import { NavLink } from "react-router-dom";
 
@@ -23,12 +23,15 @@ const Hero = () => {
             <div className="d-flex flex-column flex-sm-row gap-3 mb-4">
               <NavLink
                 to="/find-pet"
-                className="btn btn-warning btn-lg d-flex align-items-center"
+                className="btn btn-warning btn-lg d-flex align-items-center fw-semibold text-dark"
               >
                 Найти питомца <ArrowRight size={20} className="ms-2" />
               </NavLink>
-              <NavLink to="/stories" className="btn btn-outline-primary btn-lg">
-                Посмотреть истории
+              <NavLink to="/quiz" className="btn btn-outline-warning btn-lg text-dark fw-semibold">
+                ✨ Подобрать питомца
+              </NavLink>
+              <NavLink to="/stories" className="btn btn-outline-secondary btn-lg">
+                Истории
               </NavLink>
             </div>
 

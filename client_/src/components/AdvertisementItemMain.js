@@ -64,13 +64,11 @@ const AdvertisementItemMain = ({ ad }) => {
         {/* Фото */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
             overflow: "hidden",
-            height: "200px",
+            height: "220px",
             borderTopLeftRadius: "1rem",
             borderTopRightRadius: "1rem",
+            backgroundColor: "#f1f3f5",
           }}
         >
           <Card.Img
@@ -78,28 +76,74 @@ const AdvertisementItemMain = ({ ad }) => {
             src={imageUrl}
             alt={ad.animal_name}
             style={{
-              width: "90%",
+              width: "100%",
               height: "100%",
               objectFit: "cover",
-              borderRadius: "1rem",
+              borderTopLeftRadius: "1rem",
+              borderTopRightRadius: "1rem",
             }}
           />
         </div>
 
         <Card.Body>
-          <div className="d-flex justify-content-between align-items-center mb-2">
+          <div className="d-flex justify-content-between align-items-center mb-1">
             <Card.Title className="mb-0 fw-bold text-dark">
               {ad.animal_name}
             </Card.Title>
+          </div>
+
+          <div className="mb-2 d-flex flex-wrap gap-1">
+            {Number(ad.type_advertisement) === 2 ? (
+              <Badge bg="danger">Потерялся</Badge>
+            ) : Number(ad.type_advertisement) === 3 ? (
+              <Badge bg="warning" text="dark">Найден</Badge>
+            ) : Number(ad.type_advertisement) === 4 ? (
+              <Badge bg="info">Нужна передержка</Badge>
+            ) : (
+              <Badge bg="primary">Ищет дом</Badge>
+            )}
+
+            {Number(ad.user_type) === 3 && (
+              <Badge bg="success">🐾 Волонтёр</Badge>
+            )}
+            {Number(ad.user_type) === 2 && (
+              <Badge bg="secondary">🏠 Приют</Badge>
+            )}
           </div>
 
           <Card.Text className="text-muted small mb-1">
             {ad.breed} • {getFormattedAge()}
           </Card.Text>
 
-          {ad.location && (
+          {(ad.location_name || ad.location) && (
             <div className="d-flex align-items-center text-muted small mb-2">
-              <MapPin size={14} className="me-1" /> {ad.location}
+              <MapPin size={14} className="me-1 text-danger" /> {ad.location_name || ad.location}
+            </div>
+          )}
+
+          {/* Быстрые теги «Важно для дома» */}
+          {(ad.is_sterilized || ad.is_vaccinated || ad.good_with_kids || ad.good_with_animals) && (
+            <div className="d-flex flex-wrap gap-1 mb-2">
+              {ad.is_sterilized && (
+                <Badge bg="light" text="dark" className="border text-secondary fw-normal py-1 px-2 small">
+                  ✓ Стерилизован
+                </Badge>
+              )}
+              {ad.is_vaccinated && (
+                <Badge bg="light" text="dark" className="border text-secondary fw-normal py-1 px-2 small">
+                  ✓ Привит
+                </Badge>
+              )}
+              {ad.good_with_kids && (
+                <Badge bg="light" text="dark" className="border text-secondary fw-normal py-1 px-2 small">
+                  ✓ С детьми
+                </Badge>
+              )}
+              {ad.good_with_animals && (
+                <Badge bg="light" text="dark" className="border text-secondary fw-normal py-1 px-2 small">
+                  ✓ С животными
+                </Badge>
+              )}
             </div>
           )}
 

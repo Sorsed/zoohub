@@ -35,6 +35,17 @@ export const change = async (id, newItem, field) => {
   return data;
 };
 
+// Получение списка волонтеров
+export const fetchVolunteers = async () => {
+  try {
+    const { data } = await $host.get("api/user/volunteers");
+    return data;
+  } catch (err) {
+    console.error("Ошибка при получении волонтеров:", err);
+    return [];
+  }
+};
+
 // Логаут
 export const logout = async () => {
   try {

@@ -1,1 +1,13 @@
-{}
+{
+  "name": "zoohub",
+  "version": "1.0.0",
+  "description": "ZooHub - платформа помощи бездомным животным",
+  "scripts": {
+    "start": "node server/index.js",
+    "client": "npm start --prefix client_",
+    "server": "npm run dev --prefix server",
+    "build": "npm run build --prefix client_",
+    "render-build": "npm install --prefix server && npm install --prefix client_ && npm run build --prefix client_",
+    "seed": "node server/seed.js"
+  }
+}

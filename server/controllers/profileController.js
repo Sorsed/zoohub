@@ -88,19 +88,21 @@ class ProfileController {
 
       const result = await pool.query(
         `SELECT 
-         user_id,
-         user_name,
-         user_surname,
-         user_email,
-         user_phone,
-         user_ava_photo,
-         location_id,
-         user_type,
-         user_shelter_description,
-         user_shelter_site,
-         user_shelter_address
-       FROM "user"
-       WHERE user_id=$1`,
+         u.user_id,
+         u.user_name,
+         u.user_surname,
+         u.user_email,
+         u.user_phone,
+         u.user_ava_photo,
+         u.location_id,
+         u.user_type,
+         u.user_shelter_description,
+         u.user_shelter_site,
+         u.user_shelter_address,
+         COALESCE(l.location_name, 'Самара') AS location_name
+       FROM "user" u
+       LEFT JOIN location l ON u.location_id = l.location_id
+       WHERE u.user_id=$1`,
         [user_id]
       );
 
