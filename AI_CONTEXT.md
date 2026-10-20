@@ -79,8 +79,9 @@ npm run start:server   # или: cd server && npm start
 # Локальный запуск фронтенда
 npm run start:client   # или: cd client_ && npm start
 
-# Наполнение базы данных таблицами и демо-животными
-npm run seed           # или в Render Shell: npm run seed
+# Скрипт инициализации и демо-данных
+npm run init-db        # или node server/initDb.js
+# Также есть эндпоинт в браузере: https://zoohub.onrender.com/api/init-db (автоматически создаёт таблицы и наполняет данными)
 ```
 
 ---

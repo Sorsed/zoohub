@@ -8,6 +8,7 @@
     "server": "npm run dev --prefix server",
     "build": "npm run build --prefix client_",
     "render-build": "npm install --prefix server && (CI=false npm install --prefix client_ --legacy-peer-deps && CI=false npm run build --prefix client_ || echo 'Build fallback')",
-    "seed": "node server/seed.js"
+    "seed": "node server/seed.js",
+    "init-db": "node server/initDb.js"
   }
 }

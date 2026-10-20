@@ -49,6 +49,18 @@ app.use(
 );
 
 // ==================== Роуты API ====================
+const initDb = require("./initDb");
+
+app.get("/api/init-db", async (req, res) => {
+  try {
+    const force = req.query.force === "true";
+    const result = await initDb({ force });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 app.use("/api", router);
 
 // ==================== Раздача фронтенда (React Build) ====================
@@ -68,12 +80,15 @@ if (fs.existsSync(clientBuildPath)) {
   });
 }
 
-// ==================== Проверка подключения к БД ====================
+// ==================== Проверка подключения к БД и автоинициализация ====================
 pool.query("SELECT NOW()", (err, res) => {
   if (err) {
     console.error("Error connecting to the database", err.stack);
   } else {
     console.log("Connected to the database:", res.rows);
+    initDb().catch((initErr) => {
+      console.error("Warning: DB auto-init error on startup:", initErr.message);
+    });
   }
 });
 

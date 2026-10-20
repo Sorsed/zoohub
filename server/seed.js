@@ -527,11 +527,18 @@ async function seed() {
 
     console.log(`✅ Successfully seeded ${demoAds.length} pet advertisements!`);
     console.log("🎉 Seeding completed successfully!");
-    process.exit(0);
+    return true;
   } catch (err) {
     console.error("❌ Seeding failed:", err);
-    process.exit(1);
+    throw err;
   }
 }
 
-seed();
+if (require.main === module) {
+  seed()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}
+
+module.exports = seed;
+
