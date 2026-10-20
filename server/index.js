@@ -56,7 +56,7 @@ const clientBuildPath = path.resolve(__dirname, "../client_/build");
 if (fs.existsSync(clientBuildPath)) {
   app.use(express.static(clientBuildPath));
 
-  app.get("*", (req, res, next) => {
+  app.use((req, res, next) => {
     if (req.path.startsWith("/api")) {
       return next();
     }
